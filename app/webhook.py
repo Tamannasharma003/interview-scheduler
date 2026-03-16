@@ -1,9 +1,15 @@
-import requests
+import os
+from flask import Flask, request
 
-ACCESS_TOKEN = "EAALHZAkuHdf8BQwLx34Vkmebvl5Ht0PouKktlG7rw8vZBRwYKZAMHi5iW35sNM2cRaHzygBDEzhtFgSiNUaTzCdI1NaiHDUgMO0dOnIAzAO5wcmfgKtcYrotaVr0OLHAecESj2AEM66dG7zrNZC9wgwGlH5WfpWZBeXyDgDkTzELB4Xc2XCxrzmK7tqwmJUqeVdZCxNEwHlcKQbWKLLOj41Nzml2mQJtRQweiFcgX6K8lfRhEpCZA5g3HlYUPPrK08x7XI0J0ETv4oxGI5Q7g1EzqFi5QZDZD"
-PHONE_NUMBER_ID = "1133619556482851"
+app = Flask(__name__)
 
-@app.route("/webhook", methods=["GET","POST"])
+VERIFY_TOKEN = "tamanna_verify_token"
+
+@app.route("/")
+def home():
+    return "Server running"
+
+@app.route("/webhook", methods=["GET", "POST"])
 def webhook():
 
     if request.method == "GET":
@@ -19,31 +25,9 @@ def webhook():
     if request.method == "POST":
         data = request.json
         print(data)
-
-        try:
-            phone = data["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
-            text = data["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
-
-            send_message(phone, "Hello! Your message received.")
-        except:
-            pass
-
         return "EVENT_RECEIVED", 200
-    def send_message(phone, message):
 
-    url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
 
-    headers = {
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": phone,
-        "type": "text",
-        "text": {"body": message}
-    }
-
-    requests.post(url, headers=headers, json=payload)
-
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
