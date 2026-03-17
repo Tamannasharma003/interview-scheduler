@@ -45,6 +45,8 @@ def home():
 def webhook():
 
     # ✅ Verification (Meta setup)
+  
+    # ✅ GET → Verification
     if request.method == "GET":
         mode = request.args.get("hub.mode")
         token = request.args.get("hub.verify_token")
@@ -55,42 +57,36 @@ def webhook():
         else:
             return "Verification failed", 403
 
-    # ✅ Incoming message handler
+    # ✅ POST → Incoming messages
     if request.method == "POST":
-
         data = request.json
-        print("Incoming message:", data)
+        print("Incoming message FULL:", data)
 
         try:
-            entry = data.get("entry", [])
-            changes = entry[0].get("changes", []) if entry else []
-            value = changes[0].get("value", {}) if changes else {}
+            if "entry" in data:
+                for entry in data["entry"]:
+                    for change in entry.get("changes", []):
+                        value = change.get("value", {})
+                        messages = value.get("messages", [])
 
-            messages = value.get("messages", [])
+                        print("DEBUG VALUE:", value)
+                        print("DEBUG MESSAGES:", messages)
 
-            print("DEBUG VALUE:", value)
-            print("DEBUG MESSAGES:", messages)
+                        if messages:
+                            msg = messages[0]
+                            message = msg.get("text", {}).get("body")
+                            sender = msg.get("from")
 
-            if len(messages) > 0:
-                msg = messages[0]
+                            print("Message:", message)
+                            print("Sender:", sender)
 
-                message = msg.get("text", {}).get("body")
-                sender = msg.get("from")
-
-                print("Message:", message)
-                print("Sender:", sender)
-
-                reply = f"Hello Tamanna 👋 You said: {message}"
-                send_whatsapp_message(sender, reply)
-
-            else:
-                print("No messages found")
+                            reply = f"Hello Tamanna 👋 You said: {message}"
+                            send_whatsapp_message(sender, reply)
 
         except Exception as e:
             print("ERROR:", str(e))
 
         return "EVENT_RECEIVED", 200
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
