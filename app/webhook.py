@@ -6,11 +6,13 @@ app = Flask(__name__)
 
 VERIFY_TOKEN = "tamanna_verify_token"
 
-ACCESS_TOKEN = "EAALHZAkuHdf8BQ108wH6WKnPrA6LjAWPPHZBXrUrSDmLOpbnSNRF6FMwMrCHmSX6pKjbb7nubLUj843mgxgfUIhgLYOSmu4Xen9w6Apw9tIBEo57GIZCGanX1E79PZBQeZAUCu45VYArSIBk1x1gACDOhPowM5v4ZBx7l5i6kFhEHhb9nUZARgOyZASc68DPuXicd4YUBJw7SEPOyPmKxIyUtEWd0PZBSFQa8DP3ZAItNDifYXaC4z5B7AR3hGqsGVLfHP4EKPFjYZBKBXjfBVOwmsDNMJE"
+ACCESS_TOKEN = "EAALHZAkuHdf8BQ0KZB8tR5Kxy70bqAR0pTaYnKVFiKvWQe8AsDGphStHoRKhZAGNzwFZAfHhFZChE4kaAc3K0t4TahWZA9YI8aXTXV4PnCFTENjNZAoKzsU4BCunEI82c8CAsZBWAUAS1zyLH9BLwtogC7IoYKvnt12K1fIjPK4esMSDBLg1XUUQbYBiHraZBLS56wBSpezGxoQUPfZCmAi3v1OgwQAZBk1D9VrlgkRf2WM4fcXPOUDWMTomczvqE4ZAXYjBgOVPeR3e5o5oYSLAtmN4HOZBE"
 PHONE_NUMBER_ID = "1133619556482851"
 
 
 def send_whatsapp_message(to, message):
+    print("Sending message to:", to)
+    print("Message:", message)
 
     url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
 
@@ -29,7 +31,9 @@ def send_whatsapp_message(to, message):
     }
 
     response = requests.post(url, headers=headers, json=data)
-    print(response.json())
+
+    print("STATUS CODE:", response.status_code)
+    print("RESPONSE TEXT:", response.text)
 
 
 @app.route("/")
@@ -40,7 +44,7 @@ def home():
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
 
-    # WhatsApp verification
+    # ✅ Verification (Meta setup)
     if request.method == "GET":
         mode = request.args.get("hub.mode")
         token = request.args.get("hub.verify_token")
@@ -51,25 +55,39 @@ def webhook():
         else:
             return "Verification failed", 403
 
-    # When WhatsApp sends a message
+    # ✅ Incoming message handler
     if request.method == "POST":
 
         data = request.json
         print("Incoming message:", data)
 
         try:
-            message = data["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
-            sender = data["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
+            entry = data.get("entry", [])
+            changes = entry[0].get("changes", []) if entry else []
+            value = changes[0].get("value", {}) if changes else {}
 
-            print("Message:", message)
-            print("Sender:", sender)
+            messages = value.get("messages", [])
 
-            reply = f"Hello 👋 Tamanna! You said: {message}"
+            print("DEBUG VALUE:", value)
+            print("DEBUG MESSAGES:", messages)
 
-            send_whatsapp_message(sender, reply)
+            if len(messages) > 0:
+                msg = messages[0]
+
+                message = msg.get("text", {}).get("body")
+                sender = msg.get("from")
+
+                print("Message:", message)
+                print("Sender:", sender)
+
+                reply = f"Hello Tamanna 👋 You said: {message}"
+                send_whatsapp_message(sender, reply)
+
+            else:
+                print("No messages found")
 
         except Exception as e:
-            print("Error:", e)
+            print("ERROR:", str(e))
 
         return "EVENT_RECEIVED", 200
 
