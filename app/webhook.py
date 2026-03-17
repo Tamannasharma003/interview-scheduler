@@ -6,8 +6,8 @@ app = Flask(__name__)
 
 VERIFY_TOKEN = "tamanna_verify_token"
 
-ACCESS_TOKEN = "EAALHZAkuHdf8BQ0KZB8tR5Kxy70bqAR0pTaYnKVFiKvWQe8AsDGphStHoRKhZAGNzwFZAfHhFZChE4kaAc3K0t4TahWZA9YI8aXTXV4PnCFTENjNZAoKzsU4BCunEI82c8CAsZBWAUAS1zyLH9BLwtogC7IoYKvnt12K1fIjPK4esMSDBLg1XUUQbYBiHraZBLS56wBSpezGxoQUPfZCmAi3v1OgwQAZBk1D9VrlgkRf2WM4fcXPOUDWMTomczvqE4ZAXYjBgOVPeR3e5o5oYSLAtmN4HOZBE"
-PHONE_NUMBER_ID = "1133619556482851"
+ACCESS_TOKEN = os.getenv("whatsapp_token")
+PHONE_NUMBER_ID = os.getenv("phone_numberid")
 
 
 def send_whatsapp_message(to, message):
