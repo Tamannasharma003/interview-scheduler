@@ -56,6 +56,10 @@ def send_startup_message():
 
 @app.route("/")
 def home():
+    print("🔥 First request received - sending startup message")
+
+    send_startup_message()   # 👈 THIS WILL RUN
+
     return "Server running"
 
 
