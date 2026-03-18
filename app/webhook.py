@@ -7,14 +7,18 @@ app = Flask(__name__)
 VERIFY_TOKEN = "tamanna_verify_token"
 
 ACCESS_TOKEN = os.getenv("whatsapp_token")
-PHONE_NUMBER_ID = os.getenv("phone_numberid")
+PHONE_NUMBER_ID = os.getenv("phone_number_id")
+
 
 
 def send_whatsapp_message(to, message):
+
+    print("PHONE ID:", PHONE_NUMBER_ID)   # 👈 ADD HERE
+    print("ACCESS TOKEN:", ACCESS_TOKEN[:10])  # optional debug
+
     if not ACCESS_TOKEN or not PHONE_NUMBER_ID:
         print("❌ Missing ENV variables")
         return
-
     print("Sending message to:", to)
     print("Message:", message)
 
