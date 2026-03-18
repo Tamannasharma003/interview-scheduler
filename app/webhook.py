@@ -10,7 +10,7 @@ ACCESS_TOKEN = os.getenv("whatsapp_token")
 PHONE_NUMBER_ID = os.getenv("phone_number_id")
 
 # ✅ ADD MANAGER NUMBER HERE
-MANAGER_PHONE = "918168100074"   # 👈 replace with real number
+MANAGER_PHONE = "918168100074"   
 
 
 def send_whatsapp_message(to, message):
