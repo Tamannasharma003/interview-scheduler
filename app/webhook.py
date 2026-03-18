@@ -9,16 +9,19 @@ VERIFY_TOKEN = "tamanna_verify_token"
 ACCESS_TOKEN = os.getenv("whatsapp_token")
 PHONE_NUMBER_ID = os.getenv("phone_number_id")
 
+# ✅ ADD MANAGER NUMBER HERE
+MANAGER_PHONE = "918168100074"   # 👈 replace with real number
 
 
 def send_whatsapp_message(to, message):
 
-    print("PHONE ID:", PHONE_NUMBER_ID)   # 👈 ADD HERE
-    print("ACCESS TOKEN:", ACCESS_TOKEN[:10])  # optional debug
+    print("PHONE ID:", PHONE_NUMBER_ID)
+    print("ACCESS TOKEN:", ACCESS_TOKEN[:10] if ACCESS_TOKEN else None)
 
     if not ACCESS_TOKEN or not PHONE_NUMBER_ID:
         print("❌ Missing ENV variables")
         return
+
     print("Sending message to:", to)
     print("Message:", message)
 
@@ -42,6 +45,13 @@ def send_whatsapp_message(to, message):
 
     print("STATUS CODE:", response.status_code)
     print("RESPONSE TEXT:", response.text)
+
+
+# ✅ NEW FUNCTION (AUTO MESSAGE)
+def send_startup_message():
+    print("🚀 Sending startup message to manager...")
+    message = "Hi 👋 What are your free interview slots today?"
+    send_whatsapp_message(MANAGER_PHONE, message)
 
 
 @app.route("/")
@@ -102,4 +112,8 @@ def webhook():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+
+    # ✅ THIS LINE SENDS AUTO MESSAGE AFTER DEPLOY
+    send_startup_message()
+
     app.run(host="0.0.0.0", port=port)
