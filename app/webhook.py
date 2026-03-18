@@ -11,6 +11,10 @@ PHONE_NUMBER_ID = os.getenv("phone_numberid")
 
 
 def send_whatsapp_message(to, message):
+    if not ACCESS_TOKEN or not PHONE_NUMBER_ID:
+        print("❌ Missing ENV variables")
+        return
+
     print("Sending message to:", to)
     print("Message:", message)
 
@@ -44,8 +48,6 @@ def home():
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
 
-    # ✅ Verification (Meta setup)
-  
     # ✅ GET → Verification
     if request.method == "GET":
         mode = request.args.get("hub.mode")
@@ -74,8 +76,13 @@ def webhook():
 
                         if messages:
                             msg = messages[0]
-                            message = msg.get("text", {}).get("body")
+
                             sender = msg.get("from")
+
+                            if msg.get("type") == "text":
+                                message = msg.get("text", {}).get("body")
+                            else:
+                                message = "Unsupported message"
 
                             print("Message:", message)
                             print("Sender:", sender)
@@ -87,6 +94,7 @@ def webhook():
             print("ERROR:", str(e))
 
         return "EVENT_RECEIVED", 200
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
