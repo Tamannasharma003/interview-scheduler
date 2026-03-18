@@ -13,14 +13,12 @@ PHONE_NUMBER_ID = os.getenv("phone_number_id")
 MANAGER_PHONE = "918168100074"
 
 
+# 🔹 Send WhatsApp Message
 def send_whatsapp_message(to, message):
 
     if not ACCESS_TOKEN or not PHONE_NUMBER_ID:
         print("❌ Missing ENV variables")
         return
-
-    print("📤 Sending message to:", to)
-    print("💬 Message:", message)
 
     url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
 
@@ -40,32 +38,42 @@ def send_whatsapp_message(to, message):
 
     response = requests.post(url, headers=headers, json=data)
 
-    print("STATUS CODE:", response.status_code)
-    print("RESPONSE TEXT:", response.text)
+    print("📤 Sent to:", to)
+    print("💬 Message:", message)
+    print("STATUS:", response.status_code)
+    print("RESPONSE:", response.text)
 
 
-# ✅ Function to send slots message
+# 🔹 Send Slots Message
 def send_startup_message():
     print("🚀 Sending slots message...")
     message = "Hi 👋 What are your free interview slots today?"
     send_whatsapp_message(MANAGER_PHONE, message)
 
 
-# ✅ Home route (just for checking server)
+# ✅ Home Route
 @app.route("/")
 def home():
+    print("🏠 Home route hit")
     return "Server running ✅"
 
 
-# ✅ Manual trigger route (IMPORTANT)
+# ✅ TEST ROUTE (VERY IMPORTANT FOR DEBUG)
+@app.route("/test")
+def test():
+    print("🔥 TEST ROUTE WORKING")
+    return "Test route working ✅"
+
+
+# ✅ SEND SLOTS ROUTE
 @app.route("/send-slots")
 def send_slots():
-    print("📩 Triggered /send-slots")
+    print("🔥🔥🔥 /send-slots HIT")
     send_startup_message()
     return "Slots sent successfully ✅"
 
 
-# ✅ Webhook (WhatsApp)
+# ✅ Webhook
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
 
@@ -91,7 +99,6 @@ def webhook():
                     for change in entry.get("changes", []):
                         value = change.get("value", {})
 
-                        # ✅ Only process messages (ignore status updates)
                         if "messages" in value:
                             msg = value["messages"][0]
                             sender = msg.get("from")
@@ -116,6 +123,7 @@ def webhook():
         return "EVENT_RECEIVED", 200
 
 
+# 🚀 Run app
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print("🚀 Server starting...")
