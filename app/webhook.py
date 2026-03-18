@@ -9,21 +9,18 @@ VERIFY_TOKEN = "tamanna_verify_token"
 ACCESS_TOKEN = os.getenv("whatsapp_token")
 PHONE_NUMBER_ID = os.getenv("phone_number_id")
 
-# ✅ ADD MANAGER NUMBER HERE
-MANAGER_PHONE = "918168100074"   
+# ✅ Manager number (no + sign)
+MANAGER_PHONE = "918168100074"
 
 
 def send_whatsapp_message(to, message):
-
-    print("PHONE ID:", PHONE_NUMBER_ID)
-    print("ACCESS TOKEN:", ACCESS_TOKEN[:10] if ACCESS_TOKEN else None)
 
     if not ACCESS_TOKEN or not PHONE_NUMBER_ID:
         print("❌ Missing ENV variables")
         return
 
-    print("Sending message to:", to)
-    print("Message:", message)
+    print("📤 Sending message to:", to)
+    print("💬 Message:", message)
 
     url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
 
@@ -47,26 +44,32 @@ def send_whatsapp_message(to, message):
     print("RESPONSE TEXT:", response.text)
 
 
-# ✅ NEW FUNCTION (AUTO MESSAGE)
+# ✅ Function to send slots message
 def send_startup_message():
-    print("🚀 Sending startup message to manager...")
+    print("🚀 Sending slots message...")
     message = "Hi 👋 What are your free interview slots today?"
     send_whatsapp_message(MANAGER_PHONE, message)
 
 
+# ✅ Home route (just for checking server)
 @app.route("/")
 def home():
-    print("🔥 First request received - sending startup message")
-
-    send_startup_message()   # 👈 THIS WILL RUN
-
-    return "Server running"
+    return "Server running ✅"
 
 
+# ✅ Manual trigger route (IMPORTANT)
+@app.route("/send-slots")
+def send_slots():
+    print("📩 Triggered /send-slots")
+    send_startup_message()
+    return "Slots sent successfully ✅"
+
+
+# ✅ Webhook (WhatsApp)
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
 
-    # ✅ GET → Verification
+    # 🔹 Verification
     if request.method == "GET":
         mode = request.args.get("hub.mode")
         token = request.args.get("hub.verify_token")
@@ -77,24 +80,20 @@ def webhook():
         else:
             return "Verification failed", 403
 
-    # ✅ POST → Incoming messages
+    # 🔹 Incoming messages
     if request.method == "POST":
         data = request.json
-        print("Incoming message FULL:", data)
+        print("📥 Incoming:", data)
 
         try:
             if "entry" in data:
                 for entry in data["entry"]:
                     for change in entry.get("changes", []):
                         value = change.get("value", {})
-                        messages = value.get("messages", [])
 
-                        print("DEBUG VALUE:", value)
-                        print("DEBUG MESSAGES:", messages)
-
-                        if messages:
-                            msg = messages[0]
-
+                        # ✅ Only process messages (ignore status updates)
+                        if "messages" in value:
+                            msg = value["messages"][0]
                             sender = msg.get("from")
 
                             if msg.get("type") == "text":
@@ -102,22 +101,22 @@ def webhook():
                             else:
                                 message = "Unsupported message"
 
-                            print("Message:", message)
-                            print("Sender:", sender)
+                            print("💬 Message:", message)
+                            print("👤 Sender:", sender)
 
                             reply = f"Hello Tamanna 👋 You said: {message}"
                             send_whatsapp_message(sender, reply)
 
+                        else:
+                            print("📌 Status update ignored")
+
         except Exception as e:
-            print("ERROR:", str(e))
+            print("❌ ERROR:", str(e))
 
         return "EVENT_RECEIVED", 200
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-
-    # ✅ THIS LINE SENDS AUTO MESSAGE AFTER DEPLOY
-    send_startup_message()
-
+    print("🚀 Server starting...")
     app.run(host="0.0.0.0", port=port)
