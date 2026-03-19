@@ -79,8 +79,19 @@ def webhook():
             print("ERROR:", str(e))
 
         return "EVENT_RECEIVED", 200
+    
+def send_once_on_start():
+    if not os.path.exists("sent_flag.txt"):
+        send_startup_message()
+        with open("sent_flag.txt", "w") as f:
+            f.write("sent")
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+
+    print("🚀 Server starting...")
+
+    send_once_on_start()
+
     app.run(host="0.0.0.0", port=port)
