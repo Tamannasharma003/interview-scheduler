@@ -4,11 +4,6 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-with app.app_context():
-    print("🚀 App started (Railway detected)")
-    send_once_on_start()
-
-
 VERIFY_TOKEN = "tamanna_verify_token"
 
 ACCESS_TOKEN = os.getenv("whatsapp_token")
@@ -48,7 +43,7 @@ def send_whatsapp_message(to, message):
     print("RESPONSE:", response.text)
 
 
-# 🔹 Startup Message Function (THIS WAS MISSING)
+# 🔹 Startup Message
 def send_startup_message():
     print("🚀 Sending message to manager...")
     message = "Hi 👋 What are your free interview slots today?"
@@ -63,7 +58,13 @@ def send_once_on_start():
             f.write("sent")
 
 
-# ✅ Home Route (manual trigger)
+# 🔥 NOW CALL AFTER FUNCTION DEFINITION (IMPORTANT FIX)
+with app.app_context():
+    print("🚀 App started (Railway detected)")
+    send_once_on_start()
+
+
+# ✅ Home Route
 @app.route("/")
 def home():
     print("🏠 Home route hit")
@@ -104,8 +105,11 @@ def webhook():
                             print("Message:", message)
                             print("Sender:", sender)
 
-                            reply = f"Hello Tamanna 👋 You said: {message}"
-                            send_whatsapp_message(sender, reply)
+                            # 👇 TEMP: simple reply (we’ll upgrade next step)
+                            send_whatsapp_message(
+                                sender,
+                                f"Hello Tamanna 👋 You said: {message}"
+                            )
 
         except Exception as e:
             print("ERROR:", str(e))
@@ -113,12 +117,11 @@ def webhook():
         return "EVENT_RECEIVED", 200
 
 
-# 🚀 Run app
+# 🚀 Run locally
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
 
     print("🚀 Server starting...")
-
     send_once_on_start()
 
     app.run(host="0.0.0.0", port=port)
