@@ -61,9 +61,12 @@ def send_once_on_start():
 
 
 # 🔥 IMPORTANT → trigger on Railway start
-with app.app_context():
-    print("🚀 App started (Railway detected)")
-    send_once_on_start()
+@app.before_request
+def run_once():
+    if not hasattr(app, "startup_done"):
+        print("🚀 First request detected → sending message")
+        send_once_on_start()
+        app.startup_done = True
 
 
 # ✅ Home Route
