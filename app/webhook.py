@@ -52,14 +52,14 @@ def send_startup_message():
     send_whatsapp_message(MANAGER_PHONE, message)
 
 
-# 🔹 Run once per deploy (memory-based, no crash)
+# 🔹 Run once safely
 def send_once_on_start():
     if not hasattr(app, "already_sent"):
         send_startup_message()
         app.already_sent = True
 
 
-# 🔥 SAFE STARTUP TRIGGER (NO CRASH)
+# 🔥 SAFE TRIGGER (NO CRASH)
 @app.before_request
 def run_once():
     if not hasattr(app, "startup_done"):
@@ -71,21 +71,18 @@ def run_once():
 # ✅ Home Route
 @app.route("/")
 def home():
-    print("🏠 Home route hit")
     return "Server running ✅"
 
 
 # ✅ Test Route
 @app.route("/test")
 def test():
-    print("🔥 TEST ROUTE WORKING")
     return "Test route working ✅"
 
 
 # ✅ Manual trigger
 @app.route("/send-slots")
 def send_slots():
-    print("🔥 /send-slots HIT")
     send_startup_message()
     return "Slots sent successfully ✅"
 
@@ -130,19 +127,15 @@ def webhook():
 
                             # ✅ Manager sends slots
                             if sender == MANAGER_PHONE:
-                                print("📌 Manager sent slots")
-
                                 slots = message
 
                                 send_whatsapp_message(
                                     CANDIDATE_PHONE,
-                                    f"Hi 👋 Available interview slots are:\n{slots}\n\nPlease reply with your preferred time."
+                                    f"Hi 👋 Available interview slots are:\n{slots}\n\nReply with your preferred time."
                                 )
 
                             # ✅ Candidate selects slot
                             elif sender == CANDIDATE_PHONE:
-                                print("📌 Candidate selected slot")
-
                                 selected_slot = message
 
                                 send_whatsapp_message(
@@ -152,14 +145,8 @@ def webhook():
 
                                 send_whatsapp_message(
                                     CANDIDATE_PHONE,
-                                    f"🎉 Your interview is confirmed for {selected_slot}"
+                                    f"🎉 Interview confirmed for {selected_slot}"
                                 )
-
-                            else:
-                                print("⚠️ Unknown sender")
-
-                        else:
-                            print("📌 Status update ignored")
 
         except Exception as e:
             print("❌ ERROR:", str(e))
@@ -167,8 +154,7 @@ def webhook():
         return "EVENT_RECEIVED", 200
 
 
-# 🚀 Run locally only
+# 🚀 Local run only
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print("🚀 Server starting...")
     app.run(host="0.0.0.0", port=port)
