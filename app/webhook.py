@@ -47,9 +47,19 @@ def send_whatsapp_message(to, message):
 
 # 🔹 Send Slots Message to Manager
 def send_startup_message():
-    print("🚀 Sending slots message to manager...")
+    print("🚀 FUNCTION CALLED")
+
+    if not ACCESS_TOKEN:
+        print("❌ ACCESS TOKEN MISSING")
+
+    if not PHONE_NUMBER_ID:
+        print("❌ PHONE NUMBER ID MISSING")
+
     message = "Hi 👋 What are your free interview slots today?"
+
+    print("📨 Sending message now...")
     send_whatsapp_message(MANAGER_PHONE, message)
+
 
 
 # 🔹 Run once safely
@@ -81,11 +91,16 @@ def test():
 
 
 # ✅ Manual trigger
-@app.route("/send-slots")
+@@app.route("/send-slots")
 def send_slots():
-    send_startup_message()
-    return "Slots sent successfully ✅"
+    print("🔥 HARD TEST ROUTE HIT")
 
+    send_whatsapp_message(
+        MANAGER_PHONE,
+        "🔥 TEST MESSAGE FROM RAILWAY"
+    )
+
+    return "Test message sent"
 
 # ✅ Webhook
 @app.route("/webhook", methods=["GET", "POST"])
