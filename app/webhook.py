@@ -52,19 +52,18 @@ def send_startup_message():
     send_whatsapp_message(MANAGER_PHONE, message)
 
 
-# 🔹 Run once when app starts (Railway fix)
+# 🔹 Run once per deploy (memory-based, no crash)
 def send_once_on_start():
-    if not os.path.exists("sent_flag.txt"):
+    if not hasattr(app, "already_sent"):
         send_startup_message()
-        with open("sent_flag.txt", "w") as f:
-            f.write("sent")
+        app.already_sent = True
 
 
-# 🔥 IMPORTANT → trigger on Railway start
+# 🔥 SAFE STARTUP TRIGGER (NO CRASH)
 @app.before_request
 def run_once():
     if not hasattr(app, "startup_done"):
-        print("🚀 First request detected → sending message")
+        print("🚀 First request → sending startup message")
         send_once_on_start()
         app.startup_done = True
 
@@ -168,9 +167,8 @@ def webhook():
         return "EVENT_RECEIVED", 200
 
 
-# 🚀 Run app (for local only)
+# 🚀 Run locally only
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print("🚀 Server starting...")
-    send_once_on_start()
     app.run(host="0.0.0.0", port=port)
