@@ -91,7 +91,7 @@ def test():
 
 
 # ✅ Manual trigger
-@@app.route("/send-slots")
+@app.route("/send-slots")
 def send_slots():
     print("🔥 HARD TEST ROUTE HIT")
 
