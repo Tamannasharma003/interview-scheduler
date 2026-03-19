@@ -4,6 +4,11 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
+with app.app_context():
+    print("🚀 App started (Railway detected)")
+    send_once_on_start()
+
+
 VERIFY_TOKEN = "tamanna_verify_token"
 
 ACCESS_TOKEN = os.getenv("whatsapp_token")
