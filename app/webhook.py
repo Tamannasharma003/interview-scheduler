@@ -9,8 +9,9 @@ VERIFY_TOKEN = "tamanna_verify_token"
 ACCESS_TOKEN = os.getenv("whatsapp_token")
 PHONE_NUMBER_ID = os.getenv("phone_number_id")
 
-# ✅ Manager number (no + sign)
+# ✅ Phone numbers (NO + sign)
 MANAGER_PHONE = "918168100074"
+CANDIDATE_PHONE = "919910105877"
 
 
 # 🔹 Send WhatsApp Message
@@ -44,11 +45,25 @@ def send_whatsapp_message(to, message):
     print("RESPONSE:", response.text)
 
 
-# 🔹 Send Slots Message
+# 🔹 Send Slots Message to Manager
 def send_startup_message():
-    print("🚀 Sending slots message...")
+    print("🚀 Sending slots message to manager...")
     message = "Hi 👋 What are your free interview slots today?"
     send_whatsapp_message(MANAGER_PHONE, message)
+
+
+# 🔹 Run once when app starts (Railway fix)
+def send_once_on_start():
+    if not os.path.exists("sent_flag.txt"):
+        send_startup_message()
+        with open("sent_flag.txt", "w") as f:
+            f.write("sent")
+
+
+# 🔥 IMPORTANT → trigger on Railway start
+with app.app_context():
+    print("🚀 App started (Railway detected)")
+    send_once_on_start()
 
 
 # ✅ Home Route
@@ -58,17 +73,17 @@ def home():
     return "Server running ✅"
 
 
-# ✅ TEST ROUTE (VERY IMPORTANT FOR DEBUG)
+# ✅ Test Route
 @app.route("/test")
 def test():
     print("🔥 TEST ROUTE WORKING")
     return "Test route working ✅"
 
 
-# ✅ SEND SLOTS ROUTE
+# ✅ Manual trigger
 @app.route("/send-slots")
 def send_slots():
-    print("🔥🔥🔥 /send-slots HIT")
+    print("🔥 /send-slots HIT")
     send_startup_message()
     return "Slots sent successfully ✅"
 
@@ -111,8 +126,35 @@ def webhook():
                             print("💬 Message:", message)
                             print("👤 Sender:", sender)
 
-                            reply = f"Hello Tamanna 👋 You said: {message}"
-                            send_whatsapp_message(sender, reply)
+                            # ✅ Manager sends slots
+                            if sender == MANAGER_PHONE:
+                                print("📌 Manager sent slots")
+
+                                slots = message
+
+                                send_whatsapp_message(
+                                    CANDIDATE_PHONE,
+                                    f"Hi 👋 Available interview slots are:\n{slots}\n\nPlease reply with your preferred time."
+                                )
+
+                            # ✅ Candidate selects slot
+                            elif sender == CANDIDATE_PHONE:
+                                print("📌 Candidate selected slot")
+
+                                selected_slot = message
+
+                                send_whatsapp_message(
+                                    MANAGER_PHONE,
+                                    f"✅ Candidate selected: {selected_slot}"
+                                )
+
+                                send_whatsapp_message(
+                                    CANDIDATE_PHONE,
+                                    f"🎉 Your interview is confirmed for {selected_slot}"
+                                )
+
+                            else:
+                                print("⚠️ Unknown sender")
 
                         else:
                             print("📌 Status update ignored")
@@ -123,8 +165,9 @@ def webhook():
         return "EVENT_RECEIVED", 200
 
 
-# 🚀 Run app
+# 🚀 Run app (for local only)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print("🚀 Server starting...")
+    send_once_on_start()
     app.run(host="0.0.0.0", port=port)
