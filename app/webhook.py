@@ -2,6 +2,13 @@ import os
 import requests
 from flask import Flask, request
 
+# ✅ DB imports
+from database import engine, SessionLocal
+from model import Interview
+
+# ✅ Create tables
+Interview.metadata.create_all(bind=engine)
+
 app = Flask(__name__)
 
 VERIFY_TOKEN = "tamanna_verify_token"
@@ -45,7 +52,7 @@ def send_whatsapp_message(to, message):
     print("RESPONSE:", response.text)
 
 
-# 🔹 Send Slots Message to Manager
+# 🔹 Send startup message
 def send_startup_message():
     print("🚀 Sending startup message")
 
@@ -53,14 +60,13 @@ def send_startup_message():
     send_whatsapp_message(MANAGER_PHONE, message)
 
 
-# 🔹 Run once safely
+# 🔹 Run once
 def send_once_on_start():
     if not hasattr(app, "already_sent"):
         send_startup_message()
         app.already_sent = True
 
 
-# 🔥 SAFE TRIGGER
 @app.before_request
 def run_once():
     if not hasattr(app, "startup_done"):
@@ -69,13 +75,13 @@ def run_once():
         app.startup_done = True
 
 
-# ✅ Home Route
+# ✅ Home
 @app.route("/")
 def home():
     return "Server running ✅"
 
 
-# ✅ Test Route
+# ✅ Test
 @app.route("/test")
 def test():
     return "Test route working ✅"
@@ -123,7 +129,6 @@ def webhook():
                             sender_raw = msg.get("from")
                             sender = sender_raw.strip()
 
-                            # 🔥 FIX: normalize number
                             if sender.startswith("+"):
                                 sender = sender[1:]
 
@@ -132,26 +137,56 @@ def webhook():
                             else:
                                 message = "Unsupported message"
 
-                            # 🔍 DEBUG
-                            print("👤 Sender RAW:", sender_raw)
-                            print("👤 Sender CLEAN:", sender)
-                            print("📌 Manager:", MANAGER_PHONE)
-                            print("📌 Candidate:", CANDIDATE_PHONE)
+                            print("👤 Sender:", sender)
                             print("💬 Message:", message)
 
-                            # ✅ Manager sends slots
+                            # =========================
+                            # ✅ MANAGER FLOW
+                            # =========================
                             if sender == MANAGER_PHONE:
                                 print("📌 Manager detected")
 
+                                # 💾 SAVE TO DB
+                                db = SessionLocal()
+
+                                new_interview = Interview(
+                                    manager=MANAGER_PHONE,
+                                    candidate=CANDIDATE_PHONE,
+                                    slots=message,
+                                    status="pending"
+                                )
+
+                                db.add(new_interview)
+                                db.commit()
+                                db.close()
+
+                                # 📤 Send to candidate
                                 send_whatsapp_message(
                                     CANDIDATE_PHONE,
                                     f"Hi 👋 Available interview slots are:\n{message}\n\nReply with your preferred time."
                                 )
 
-                            # ✅ Candidate selects slot
+                            # =========================
+                            # ✅ CANDIDATE FLOW
+                            # =========================
                             elif sender == CANDIDATE_PHONE:
                                 print("📌 Candidate detected")
 
+                                db = SessionLocal()
+
+                                interview = db.query(Interview)\
+                                    .filter_by(candidate=CANDIDATE_PHONE)\
+                                    .order_by(Interview.id.desc())\
+                                    .first()
+
+                                if interview:
+                                    interview.selected_slot = message
+                                    interview.status = "confirmed"
+                                    db.commit()
+
+                                db.close()
+
+                                # 📤 Notify both
                                 send_whatsapp_message(
                                     MANAGER_PHONE,
                                     f"✅ Candidate selected: {message}"
@@ -171,7 +206,7 @@ def webhook():
         return "EVENT_RECEIVED", 200
 
 
-# 🚀 Local run
+# 🚀 Run local
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
