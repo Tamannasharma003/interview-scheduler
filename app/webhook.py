@@ -47,19 +47,10 @@ def send_whatsapp_message(to, message):
 
 # 🔹 Send Slots Message to Manager
 def send_startup_message():
-    print("🚀 FUNCTION CALLED")
-
-    if not ACCESS_TOKEN:
-        print("❌ ACCESS TOKEN MISSING")
-
-    if not PHONE_NUMBER_ID:
-        print("❌ PHONE NUMBER ID MISSING")
+    print("🚀 Sending startup message")
 
     message = "Hi 👋 What are your free interview slots today?"
-
-    print("📨 Sending message now...")
     send_whatsapp_message(MANAGER_PHONE, message)
-
 
 
 # 🔹 Run once safely
@@ -69,7 +60,7 @@ def send_once_on_start():
         app.already_sent = True
 
 
-# 🔥 SAFE TRIGGER (NO CRASH)
+# 🔥 SAFE TRIGGER
 @app.before_request
 def run_once():
     if not hasattr(app, "startup_done"):
@@ -93,14 +84,12 @@ def test():
 # ✅ Manual trigger
 @app.route("/send-slots")
 def send_slots():
-    print("🔥 HARD TEST ROUTE HIT")
-
     send_whatsapp_message(
         MANAGER_PHONE,
         "🔥 TEST MESSAGE FROM RAILWAY"
     )
-
     return "Test message sent"
+
 
 # ✅ Webhook
 @app.route("/webhook", methods=["GET", "POST"])
@@ -130,38 +119,51 @@ def webhook():
 
                         if "messages" in value:
                             msg = value["messages"][0]
-                            sender = msg.get("from")
+
+                            sender_raw = msg.get("from")
+                            sender = sender_raw.strip()
+
+                            # 🔥 FIX: normalize number
+                            if sender.startswith("+"):
+                                sender = sender[1:]
 
                             if msg.get("type") == "text":
                                 message = msg.get("text", {}).get("body")
                             else:
                                 message = "Unsupported message"
 
+                            # 🔍 DEBUG
+                            print("👤 Sender RAW:", sender_raw)
+                            print("👤 Sender CLEAN:", sender)
+                            print("📌 Manager:", MANAGER_PHONE)
+                            print("📌 Candidate:", CANDIDATE_PHONE)
                             print("💬 Message:", message)
-                            print("👤 Sender:", sender)
 
                             # ✅ Manager sends slots
                             if sender == MANAGER_PHONE:
-                                slots = message
+                                print("📌 Manager detected")
 
                                 send_whatsapp_message(
                                     CANDIDATE_PHONE,
-                                    f"Hi 👋 Available interview slots are:\n{slots}\n\nReply with your preferred time."
+                                    f"Hi 👋 Available interview slots are:\n{message}\n\nReply with your preferred time."
                                 )
 
                             # ✅ Candidate selects slot
                             elif sender == CANDIDATE_PHONE:
-                                selected_slot = message
+                                print("📌 Candidate detected")
 
                                 send_whatsapp_message(
                                     MANAGER_PHONE,
-                                    f"✅ Candidate selected: {selected_slot}"
+                                    f"✅ Candidate selected: {message}"
                                 )
 
                                 send_whatsapp_message(
                                     CANDIDATE_PHONE,
-                                    f"🎉 Interview confirmed for {selected_slot}"
+                                    f"🎉 Interview confirmed for {message}"
                                 )
+
+                            else:
+                                print("⚠️ Unknown sender")
 
         except Exception as e:
             print("❌ ERROR:", str(e))
@@ -169,7 +171,7 @@ def webhook():
         return "EVENT_RECEIVED", 200
 
 
-# 🚀 Local run only
+# 🚀 Local run
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
