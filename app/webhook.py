@@ -126,11 +126,9 @@ def webhook():
                         if "messages" in value:
                             msg = value["messages"][0]
 
-                            sender_raw = msg.get("from")
-                            sender = sender_raw.strip()
-
-                            if sender.startswith("+"):
-                                sender = sender[1:]
+                            # 🔥 FIXED NORMALIZATION
+                            sender = msg.get("from")
+                            sender = sender.replace(" ", "").replace("+", "").strip()
 
                             if msg.get("type") == "text":
                                 message = msg.get("text", {}).get("body")
@@ -143,17 +141,15 @@ def webhook():
                             # =========================
                             # ✅ MANAGER FLOW
                             # =========================
-                            if sender == MANAGER_PHONE:
+                            if MANAGER_PHONE in sender:
                                 print("📌 Manager detected")
 
-                                # 💾 SAVE TO DB
                                 db = SessionLocal()
 
                                 new_interview = Interview(
-                                    manager=MANAGER_PHONE,
-                                    candidate=CANDIDATE_PHONE,
-                                    slots=message,
-                                    status="pending"
+                                    manager_name=MANAGER_PHONE,
+                                    candidate_name=CANDIDATE_PHONE,
+                                    time_slot=message
                                 )
 
                                 db.add(new_interview)
@@ -169,19 +165,17 @@ def webhook():
                             # =========================
                             # ✅ CANDIDATE FLOW
                             # =========================
-                            elif sender == CANDIDATE_PHONE:
+                            elif CANDIDATE_PHONE in sender:
                                 print("📌 Candidate detected")
 
                                 db = SessionLocal()
 
                                 interview = db.query(Interview)\
-                                    .filter_by(candidate=CANDIDATE_PHONE)\
                                     .order_by(Interview.id.desc())\
                                     .first()
 
                                 if interview:
-                                    interview.selected_slot = message
-                                    interview.status = "confirmed"
+                                    interview.time_slot = message
                                     db.commit()
 
                                 db.close()
