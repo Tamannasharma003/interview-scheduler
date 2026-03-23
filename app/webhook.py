@@ -126,7 +126,7 @@ def webhook():
                         if "messages" in value:
                             msg = value["messages"][0]
 
-                            # 🔥 FIXED NORMALIZATION
+                            # ✅ Normalize sender
                             sender = msg.get("from")
                             sender = sender.replace(" ", "").replace("+", "").strip()
 
@@ -141,7 +141,7 @@ def webhook():
                             # =========================
                             # ✅ MANAGER FLOW
                             # =========================
-                            if MANAGER_PHONE in sender:
+                            if sender == MANAGER_PHONE:
                                 print("📌 Manager detected")
 
                                 db = SessionLocal()
@@ -165,7 +165,7 @@ def webhook():
                             # =========================
                             # ✅ CANDIDATE FLOW
                             # =========================
-                            elif CANDIDATE_PHONE in sender:
+                            elif sender == CANDIDATE_PHONE:
                                 print("📌 Candidate detected")
 
                                 db = SessionLocal()
