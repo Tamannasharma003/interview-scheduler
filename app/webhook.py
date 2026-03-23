@@ -1,6 +1,7 @@
 import os
 import requests
 from flask import Flask, request
+from model import Interview
 
 # ✅ DB imports
 from database import engine, SessionLocal
