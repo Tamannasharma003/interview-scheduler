@@ -147,9 +147,9 @@ def webhook():
                                 db = SessionLocal()
 
                                 new_interview = Interview(
-                                    manager_name=MANAGER_PHONE,
-                                    candidate_name=CANDIDATE_PHONE,
-                                    time_slot=message
+                                    manager=MANAGER_PHONE,
+                                    slots=message,
+                                    status="pending"
                                 )
 
                                 db.add(new_interview)
@@ -175,7 +175,8 @@ def webhook():
                                     .first()
 
                                 if interview:
-                                    interview.time_slot = message
+                                    interview.selected_slot = message
+                                    interview.status = "confirmed"
                                     db.commit()
 
                                 db.close()
