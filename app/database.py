@@ -1,16 +1,17 @@
+import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "sqlite:///./interview_scheduler.db"
+# 🔥 Railway MySQL URL
+DATABASE_URL = os.getenv("MYSQL_URL")
 
-
+# 🔥 IMPORTANT: pymysql add karo
+DATABASE_URL = DATABASE_URL.replace("mysql://", "mysql+pymysql://")
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    pool_pre_ping=True
 )
-
 
 SessionLocal = sessionmaker(bind=engine)
 
