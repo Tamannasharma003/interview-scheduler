@@ -148,10 +148,12 @@ def webhook():
                                 db = SessionLocal()
 
                                 new_interview = Interview(
-                                    manager=MANAGER_PHONE,
+                                    manager_id=MANAGER_PHONE,
+                                    candidate_id=CANDIDATE_PHONE,
                                     slots=message,
                                     status="pending"
                                 )
+
 
                                 db.add(new_interview)
                                 db.commit()
