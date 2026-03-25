@@ -3,18 +3,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # ✅ Use DATABASE_URL (important)
-DATABASE_URL = os.getenv("DATABASE_URL")
+MYSQL_URL = os.getenv("MYSQL_URL")
 
-if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL not found in environment variables")
+if not MYSQL_URL:
+    raise ValueError("❌ MYSQL_URL not found in environment variables")
 
 # ✅ Fix driver
-if DATABASE_URL.startswith("mysql://"):
-    DATABASE_URL = DATABASE_URL.replace("mysql://", "mysql+pymysql://")
+if MYSQL_URL.startswith("mysql://"):
+   MYSQL_URL = MYSQL_URL.replace("mysql://", "mysql+pymysql://")
 
 # ✅ Create engine
 engine = create_engine(
-    DATABASE_URL,
+    MYSQL_URL,
     pool_pre_ping=True
 )
 
