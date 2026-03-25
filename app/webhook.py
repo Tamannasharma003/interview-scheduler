@@ -124,91 +124,95 @@ def webhook():
         data = request.json
         print("📥 Incoming:", data)
 
-        try:
+        try: 
             if "entry" in data:
-                for entry in data["entry"]:
-                    for change in entry.get("changes", []):
-                        value = change.get("value", {})
+             for entry in data["entry"]:
+              for change in entry.get("changes", []):
+                value = change.get("value", {})
 
-                        if "messages" in value:
-                            msg = value["messages"][0]
+                if "messages" in value:
+                    msg = value["messages"][0]
 
-                            # ✅ Normalize sender
-                            sender = msg.get("from")
-                            sender = sender.replace(" ", "").replace("+", "").strip()
+                    # ✅ Normalize sender
+                    sender = msg.get("from")
+                    sender = sender.replace(" ", "").replace("+", "").strip()
 
-                            if msg.get("type") == "text":
-                                message = msg.get("text", {}).get("body")
-                            else:
-                                message = "Unsupported message"
+                    if msg.get("type") == "text":
+                        message = msg.get("text", {}).get("body")
+                    else:
+                        message = "Unsupported message"
 
-                            print("👤 Sender:", sender)
-                            print("💬 Message:", message)
+                    print("👤 Sender:", sender)
+                    print("💬 Message:", message)
 
-                            # =========================
-                            # ✅ MANAGER FLOW
-                            # =========================
-                            if sender == MANAGER_PHONE:
-                                print("📌 Manager detected")
+                    # =========================
+                    # ✅ MANAGER FLOW
+                    # =========================
+                    if sender == MANAGER_PHONE:
+                        print("📌 Manager detected")
 
-                                db = SessionLocal()
+                        db = SessionLocal()
 
-                                new_interview = Interview(
-                                    manager_id=MANAGER_PHONE,
-                                    candidate_id=CANDIDATE_PHONE,
-                                    slots=message,
-                                    status="pending"
-                                )
+                        new_interview = Interview(
+                            manager_id=MANAGER_PHONE,
+                            candidate_id=CANDIDATE_PHONE,
+                            slots=message,
+                            status="pending"
+                        )
 
+                        db.add(new_interview)
+                        db.commit()
+                        db.close()
 
-                                db.add(new_interview)
-                                db.commit()
-                                db.close()
+                        # 📤 Send to candidate
+                        send_whatsapp_message(
+                            CANDIDATE_PHONE,
+                            f"Hi 👋 Available interview slots are:\n{message}\n\nReply with your preferred time."
+                        )
 
-                                # 📤 Send to candidate
-                                send_whatsapp_message(
-                                    CANDIDATE_PHONE,
-                                    f"Hi 👋 Available interview slots are:\n{message}\n\nReply with your preferred time."
-                                )
+                    # =========================
+                    # ✅ CANDIDATE FLOW
+                    # =========================
+                    elif sender == CANDIDATE_PHONE:
+                        print("📌 Candidate detected")
 
-                                                        # =========================
-                            # ✅ CANDIDATE FLOW
-                            # =========================
-                            elif sender == CANDIDATE_PHONE:
-                                print("📌 Candidate detected")
+                        db = SessionLocal()
 
-                                db = SessionLocal()
+                        interview = db.query(Interview)\
+                            .order_by(Interview.id.desc())\
+                            .first()
 
-                                interview = db.query(Interview)\
-                                    .order_by(Interview.id.desc())\
-                                    .first()
+                        if interview:
+                            interview.selected_slot = message
+                            interview.status = "confirmed"
+                            db.commit()
 
-                                if interview:
-                                    interview.selected_slot = message
-                                    interview.status = "confirmed"
-                                    db.commit()
+                            print("🚀 Creating calendar event...")
+                            create_event(message)
 
-                                db.close()
+                        else:
+                            print("⚠️ No interview found in DB")
 
-                                # 📤 Notify both
-                                send_whatsapp_message(
-                                    MANAGER_PHONE,
-                                    f"✅ Candidate selected: {message}"
-                                )
+                        db.close()
 
-                                send_whatsapp_message(
-                                    CANDIDATE_PHONE,
-                                    f"🎉 Interview confirmed for {message}"
-                                )
+                        # 📤 Notify both
+                        send_whatsapp_message(
+                            MANAGER_PHONE,
+                            f"✅ Candidate selected: {message}"
+                        )
 
-                            else:
-                                print("⚠️ Unknown sender")
+                        send_whatsapp_message(
+                            CANDIDATE_PHONE,
+                            f"🎉 Interview confirmed for {message}"
+                        )
+
+                    else:
+                        print("⚠️ Unknown sender")
 
         except Exception as e:
-            print("❌ ERROR:", str(e))
+                   print("❌ ERROR:", str(e))
 
     return "EVENT_RECEIVED", 200
-
 
 
 # 🚀 Run local
