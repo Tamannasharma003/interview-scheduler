@@ -1,11 +1,14 @@
 import os
 import requests
 from flask import Flask, request
-from model import Interview
+from datetime import datetime
 
 # ✅ DB imports
 from database import engine, SessionLocal
 from model import Interview
+
+# ✅ Calendar import
+from app.calendar_service import create_event
 
 # ✅ Create tables
 Interview.metadata.create_all(bind=engine)
@@ -154,7 +157,6 @@ def webhook():
                                     status="pending"
                                 )
 
-
                                 db.add(new_interview)
                                 db.commit()
                                 db.close()
@@ -181,6 +183,22 @@ def webhook():
                                     interview.selected_slot = message
                                     interview.status = "confirmed"
                                     db.commit()
+
+                                    # 🔥 CALENDAR INTEGRATION
+                                    try:
+                                        print("🔥 Calling calendar function")
+
+                                        # ⚠️ TEMP HARDCODE (replace later with dynamic parsing)
+                                        start_time = datetime(2026, 3, 26, 14, 0)
+
+                                        create_event(
+                                            manager_email="your_manager_email@gmail.com",
+                                            candidate_email="your_candidate_email@gmail.com",
+                                            start_time=start_time
+                                        )
+
+                                    except Exception as e:
+                                        print("❌ Calendar Error:", str(e))
 
                                 db.close()
 
