@@ -1,2 +1,5 @@
-pymysql
+flask
 sqlalchemy
+pymysql
+cryptography
+requests
