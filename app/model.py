@@ -9,3 +9,4 @@ class Interview(Base):
     candidate_id = Column(Integer, nullable=True)
     slots = Column(Text, nullable=True)
     selected_slot = Column(String(255), nullable=True)
+    status = Column(String(20), default="pending")
