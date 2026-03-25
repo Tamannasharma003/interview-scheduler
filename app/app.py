@@ -2,18 +2,12 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# Import webhook routes AFTER creating app
-import webhook
-
-
-import os
+# ✅ IMPORTANT: import AFTER app creation
+from webhook import *
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))  # Railway PORT
-    print("🚀 Starting main app...")
+    import os
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-    @app.route("/")
-    def home():
-     return "Server running ✅"
 
 
