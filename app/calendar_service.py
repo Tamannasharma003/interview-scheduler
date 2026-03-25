@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
-from app.google_auth import get_credentials
+from google_auth import get_credentials
+
 
 def create_event(manager_email, candidate_email, start_time):
     creds = get_credentials()
