@@ -148,7 +148,8 @@ def webhook():
                     # =========================
                     # ✅ MANAGER FLOW
                     # =========================
-                    if sender == MANAGER_PHONE:
+                    if sender.endswith(MANAGER_PHONE[-10:]):
+
                         print("📌 Manager detected")
 
                         db = SessionLocal()
@@ -173,7 +174,8 @@ def webhook():
                     # =========================
                     # ✅ CANDIDATE FLOW
                     # =========================
-                    elif sender == CANDIDATE_PHONE:
+                    elif sender.endswith(CANDIDATE_PHONE[-10:]):
+
                         print("📌 Candidate detected")
 
                         db = SessionLocal()
