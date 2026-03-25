@@ -1,4 +1,5 @@
 import os
+from app import app   # ✅ Correct
 import requests
 from flask import Flask, request
 from model import Interview
@@ -8,7 +9,7 @@ from database import engine, SessionLocal
 from model import Interview
 
 
-from app.calendar_service import create_event
+from calendar_service import create_event
 from datetime import datetime
 
 
