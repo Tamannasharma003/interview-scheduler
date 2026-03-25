@@ -1,14 +1,16 @@
 import os
 import requests
 from flask import Flask, request
-from datetime import datetime
+from model import Interview
 
 # ✅ DB imports
 from database import engine, SessionLocal
 from model import Interview
 
-# ✅ Calendar import
+
 from app.calendar_service import create_event
+from datetime import datetime
+
 
 # ✅ Create tables
 Interview.metadata.create_all(bind=engine)
@@ -157,6 +159,7 @@ def webhook():
                                     status="pending"
                                 )
 
+
                                 db.add(new_interview)
                                 db.commit()
                                 db.close()
@@ -167,7 +170,7 @@ def webhook():
                                     f"Hi 👋 Available interview slots are:\n{message}\n\nReply with your preferred time."
                                 )
 
-                            # =========================
+                                                        # =========================
                             # ✅ CANDIDATE FLOW
                             # =========================
                             elif sender == CANDIDATE_PHONE:
@@ -183,22 +186,6 @@ def webhook():
                                     interview.selected_slot = message
                                     interview.status = "confirmed"
                                     db.commit()
-
-                                    # 🔥 CALENDAR INTEGRATION
-                                    try:
-                                        print("🔥 Calling calendar function")
-
-                                        # ⚠️ TEMP HARDCODE (replace later with dynamic parsing)
-                                        start_time = datetime(2026, 3, 26, 14, 0)
-
-                                        create_event(
-                                            manager_email="your_manager_email@gmail.com",
-                                            candidate_email="your_candidate_email@gmail.com",
-                                            start_time=start_time
-                                        )
-
-                                    except Exception as e:
-                                        print("❌ Calendar Error:", str(e))
 
                                 db.close()
 
@@ -219,7 +206,8 @@ def webhook():
         except Exception as e:
             print("❌ ERROR:", str(e))
 
-        return "EVENT_RECEIVED", 200
+    return "EVENT_RECEIVED", 200
+
 
 
 # 🚀 Run local
