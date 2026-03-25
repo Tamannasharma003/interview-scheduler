@@ -1,11 +1,11 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Text
 from database import Base
 
 class Interview(Base):
     __tablename__ = "interviews"
 
     id = Column(Integer, primary_key=True, index=True)
-    manager = Column(String(50))
-    slots = Column(String(255))
-    selected_slot = Column(String(50))
-    status = Column(String(20))
+    manager_id = Column(Integer, nullable=True)
+    candidate_id = Column(Integer, nullable=True)
+    slots = Column(Text, nullable=True)
+    selected_slot = Column(String(255), nullable=True)
