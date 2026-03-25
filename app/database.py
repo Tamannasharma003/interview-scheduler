@@ -2,14 +2,15 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# ✅ Get Railway MySQL URL
-DATABASE_URL = os.getenv("MYSQL_URL")
+# ✅ Use DATABASE_URL (important)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("❌ MYSQL_URL not found in environment variables")
+    raise ValueError("❌ DATABASE_URL not found in environment variables")
 
-# ✅ Fix mysql driver
-DATABASE_URL = DATABASE_URL.replace("mysql://", "mysql+pymysql://")
+# ✅ Fix driver
+if DATABASE_URL.startswith("mysql://"):
+    DATABASE_URL = DATABASE_URL.replace("mysql://", "mysql+pymysql://")
 
 # ✅ Create engine
 engine = create_engine(
