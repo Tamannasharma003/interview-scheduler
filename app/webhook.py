@@ -1,5 +1,5 @@
 import os
-from app import app   # ✅ Correct
+
 import requests
 from flask import Flask, request
 from model import Interview
