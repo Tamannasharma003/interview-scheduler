@@ -3,8 +3,11 @@ __pycache__/
 *.pyc
 
 # Google secrets
-credentials.json
 token.json
+app/token.json
+credentials.json
+app/credentials.json
+
 
 # OS files
 .DS_Store
