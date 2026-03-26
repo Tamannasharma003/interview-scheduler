@@ -1,23 +1,18 @@
 import os
 import json
-from google.oauth2.service_account import Credentials
+from google.oauth2.credentials import Credentials
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 def get_credentials():
-    creds_json = os.getenv("GOOGLE_CREDENTIALS")
 
-    # 🔥 ADD THIS LINE HERE
-    print("DEBUG GOOGLE_CREDENTIALS:", creds_json[:100] if creds_json else "NONE")
+    token_data = os.getenv("TOKEN_JSON")
 
-    if not creds_json:
-        raise ValueError("❌ GOOGLE_CREDENTIALS not set")
+    if not token_data:
+        raise Exception("TOKEN_JSON not found in Railway")
 
-    creds_dict = json.loads(creds_json)
+    creds_dict = json.loads(token_data)
 
-    creds = Credentials.from_service_account_info(
-        creds_dict,
-        scopes=SCOPES
-    )
+    creds = Credentials.from_authorized_user_info(creds_dict, SCOPES)
 
     return creds

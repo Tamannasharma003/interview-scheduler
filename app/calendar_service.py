@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
 from google_auth import get_credentials
+import uuid
 
 def create_event(manager_email, candidate_email, start_time):
 
@@ -12,7 +13,7 @@ def create_event(manager_email, candidate_email, start_time):
     event = {
         'summary': 'Interview Scheduled',
         'location': 'Google Meet',
-        'description': 'Interview between manager and candidate',
+        'description': f'Interview between {manager_email} and {candidate_email}',
 
         'start': {
             'dateTime': start_time.isoformat(),
@@ -23,18 +24,24 @@ def create_event(manager_email, candidate_email, start_time):
             'timeZone': 'Asia/Kolkata',
         },
 
-        # ✅ VERY IMPORTANT (this sends email + invite)
         'attendees': [
             {'email': manager_email},
             {'email': candidate_email},
         ],
 
-        # ✅ Google Meet link
         'conferenceData': {
             'createRequest': {
-                'requestId': 'sample123',
+                'requestId': str(uuid.uuid4()),  # ✅ FIXED
                 'conferenceSolutionKey': {'type': 'hangoutsMeet'}
             }
+        },
+
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'email', 'minutes': 30},
+                {'method': 'popup', 'minutes': 10},
+            ],
         }
     }
 
@@ -42,7 +49,12 @@ def create_event(manager_email, candidate_email, start_time):
         calendarId='primary',
         body=event,
         conferenceDataVersion=1,
-        sendUpdates='all'   # ✅ THIS SENDS EMAILS
+        sendUpdates='all'
     ).execute()
 
     print("✅ Event created:", event.get("htmlLink"))
+
+    # ✅ Optional: print Meet link
+    meet_link = event.get("conferenceData", {}).get("entryPoints", [])
+    if meet_link:
+        print("🎥 Meet Link:", meet_link[0].get("uri"))
