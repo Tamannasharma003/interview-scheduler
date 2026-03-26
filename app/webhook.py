@@ -103,8 +103,6 @@ def webhook():
                         value = change.get("value", {})
 
                         if "messages" in value:
-                            print("⏭️ Skipping status update")
-                            continue
                             msg = value["messages"][0]
 
                             sender = msg.get("from", "")
