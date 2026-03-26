@@ -7,11 +7,14 @@ def create_event(manager_email, candidate_email, start_time):
     creds = get_credentials()
     service = build('calendar', 'v3', credentials=creds)
 
-    # ✅ FIX: convert string → datetime if needed
+    # ✅ Convert string → datetime if needed
     if isinstance(start_time, str):
-        start_time = datetime.strptime(start_time.strip().lower(), "%I %p")
+        try:
+            start_time = datetime.strptime(start_time.strip().lower(), "%I%p")
+        except:
+            start_time = datetime.strptime(start_time.strip().lower(), "%I %p")
 
-        # optional: set today's date
+        # ✅ Set today's date
         now = datetime.now()
         start_time = start_time.replace(
             year=now.year,
@@ -21,10 +24,11 @@ def create_event(manager_email, candidate_email, start_time):
 
     end_time = start_time + timedelta(hours=1)
 
+    # ✅ FIXED EVENT (no attendees)
     event = {
         'summary': 'Interview Scheduled',
         'location': 'Online',
-        'description': 'Interview between manager and candidate',
+        'description': f'Interview scheduled at {start_time.strftime("%I:%M %p")}',
         'start': {
             'dateTime': start_time.isoformat(),
             'timeZone': 'Asia/Kolkata',
@@ -33,19 +37,19 @@ def create_event(manager_email, candidate_email, start_time):
             'dateTime': end_time.isoformat(),
             'timeZone': 'Asia/Kolkata',
         },
-        'attendees': [
-            {'email': manager_email},
-            {'email': candidate_email},
-        ],
         'reminders': {
             'useDefault': True,
         },
     }
 
-    event = service.events().insert(
-        calendarId='primary',
-        body=event,
-        sendUpdates='all'
-    ).execute()
+    try:
+        event = service.events().insert(
+            calendarId='primary',
+            body=event,
+            sendUpdates='none'   # ✅ IMPORTANT FIX
+        ).execute()
 
-    print("✅ Event created:", event.get('htmlLink'))
+        print("✅ Event created:", event.get('htmlLink'))
+
+    except Exception as e:
+        print("❌ Calendar Error:", str(e))
