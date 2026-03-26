@@ -5,7 +5,27 @@ from flask import Flask, request
 from database import engine, SessionLocal
 from model import Interview
 from calendar_service import create_event
-from datetime import datetime
+from datetime import datetime, timedelta
+
+
+def convert_to_datetime(slot_str):
+    now = datetime.now()
+
+    time_obj = datetime.strptime(slot_str.strip().lower(), "%I%p").time()
+
+    start_time = datetime(
+        year=now.year,
+        month=now.month,
+        day=now.day,
+        hour=time_obj.hour,
+        minute=time_obj.minute
+    )
+
+    if start_time < now:
+        start_time = start_time + timedelta(days=1)
+
+    return start_time
+
 
 # ✅ Create tables
 Interview.metadata.create_all(bind=engine)
@@ -161,12 +181,13 @@ def webhook():
 
                                     try:
                                         # convert "4pm" → datetime
-                                        selected_time = datetime.strptime(message, "%I%p")
+                                        
 
+                                        start_time = convert_to_datetime(message)
                                         create_event(
                                             "malvikaa.1708@gmail.com",
                                             "tamannasharma336@gmail.com",
-                                            selected_time
+                                            start_time
                                         )
 
                                         # ✅ Send confirmation AFTER selection
