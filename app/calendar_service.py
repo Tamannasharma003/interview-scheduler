@@ -7,6 +7,18 @@ def create_event(manager_email, candidate_email, start_time):
     creds = get_credentials()
     service = build('calendar', 'v3', credentials=creds)
 
+    # ✅ FIX: convert string → datetime if needed
+    if isinstance(start_time, str):
+        start_time = datetime.strptime(start_time.strip().lower(), "%I %p")
+
+        # optional: set today's date
+        now = datetime.now()
+        start_time = start_time.replace(
+            year=now.year,
+            month=now.month,
+            day=now.day
+        )
+
     end_time = start_time + timedelta(hours=1)
 
     event = {
@@ -33,7 +45,7 @@ def create_event(manager_email, candidate_email, start_time):
     event = service.events().insert(
         calendarId='primary',
         body=event,
-        sendUpdates='all'   # 🔥 THIS sends email automatically
+        sendUpdates='all'
     ).execute()
 
     print("✅ Event created:", event.get('htmlLink'))

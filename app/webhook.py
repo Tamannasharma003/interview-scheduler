@@ -187,32 +187,34 @@ def webhook():
                                 interview.status = "confirmed"
                                 db.commit()
 
+                                
                                 print("🚀 Creating calendar event...")
 
-                                create_event(
-                                    message,
-                                    "tamannasharma336@gmail.com",
-                                    "2026-03-26T18:00:00"
-                                )
+                            create_event(
+                               "malvikaa.1708@gmail.com",                 # 🔥 replace with real manager email
+                                "tamannasharma336@gmail.com",        # candidate email
+                                message                              # "5 pm"
+                                  )
 
-                            else:
+
+                        else:
                                 print("⚠️ No interview found in DB")
 
-                            db.close()
+                        db.close()
 
                             # 📤 Notify both
-                            send_whatsapp_message(
+                        send_whatsapp_message(
                                 MANAGER_PHONE,
                                 f"✅ Candidate selected: {message}"
                             )
 
-                            send_whatsapp_message(
+                        send_whatsapp_message(
                                 CANDIDATE_PHONE,
                                 f"🎉 Interview confirmed for {message}"
                             )
 
-                        else:
-                            print("⚠️ Unknown sender")
+                    else:
+                        print("⚠️ Unknown sender")
    
     except Exception as e:
         print("❌ ERROR:", str(e))
