@@ -8,6 +8,9 @@ from calendar_service import create_event
 from datetime import datetime, timedelta
 
 
+# ================================
+# 🔹 Convert "2pm" → datetime
+# ================================
 def convert_to_datetime(slot_str):
     now = datetime.now()
 
@@ -27,7 +30,9 @@ def convert_to_datetime(slot_str):
     return start_time
 
 
-# ✅ Create tables
+# ================================
+# 🔹 Setup
+# ================================
 Interview.metadata.create_all(bind=engine)
 
 app = Flask(__name__)
@@ -37,12 +42,13 @@ VERIFY_TOKEN = "tamanna_verify_token"
 ACCESS_TOKEN = os.getenv("whatsapp_token")
 PHONE_NUMBER_ID = os.getenv("phone_number_id")
 
-# ✅ Phone numbers (NO + sign)
 MANAGER_PHONE = "918168100074"
 CANDIDATE_PHONE = "919910105877"
 
 
+# ================================
 # 🔹 Send WhatsApp Message
+# ================================
 def send_whatsapp_message(to, message):
     if not ACCESS_TOKEN or not PHONE_NUMBER_ID:
         print("❌ Missing ENV variables")
@@ -72,7 +78,9 @@ def send_whatsapp_message(to, message):
     print("RESPONSE:", response.text)
 
 
-# 🔹 Startup message
+# ================================
+# 🔹 Startup Message
+# ================================
 def send_startup_message():
     print("🚀 Sending startup message")
 
@@ -82,7 +90,6 @@ def send_startup_message():
     )
 
 
-# 🔹 Run once
 @app.before_request
 def run_once():
     if not hasattr(app, "startup_done"):
@@ -90,13 +97,14 @@ def run_once():
         app.startup_done = True
 
 
-# ✅ Home
+# ================================
+# 🔹 Routes
+# ================================
 @app.route("/")
 def home():
     return "Server running ✅"
 
 
-# ✅ Webhook
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
 
@@ -173,32 +181,54 @@ def webhook():
                                     .first()
 
                                 if interview:
-                                    interview.selected_slot = message
+                                    available_slots = interview.slots.lower().replace(",", " ").split()
+                                    selected_slot = message.lower().strip()
+
+                                    # Normalize spaces (2 pm → 2pm)
+                                    selected_slot = selected_slot.replace(" ", "")
+                                    available_slots = [s.replace(" ", "") for s in available_slots]
+
+                                    print("📌 Available:", available_slots)
+                                    print("📌 Selected:", selected_slot)
+
+                                    # ❌ INVALID SLOT
+                                    if selected_slot not in available_slots:
+                                        print("❌ Invalid slot selected")
+
+                                        send_whatsapp_message(
+                                            CANDIDATE_PHONE,
+                                            f"❌ Invalid slot.\nPlease choose from:\n{interview.slots}"
+                                        )
+
+                                        db.close()
+                                        return "ok", 200
+
+                                    # ✅ VALID SLOT
+                                    interview.selected_slot = selected_slot
                                     interview.status = "confirmed"
                                     db.commit()
 
                                     print("🚀 Creating calendar event...")
 
                                     try:
-                                        # convert "4pm" → datetime
-                                        
+                                        start_time = convert_to_datetime(selected_slot)
 
-                                        start_time = convert_to_datetime(message)
                                         create_event(
                                             "malvikaa.1708@gmail.com",
                                             "tamannasharma336@gmail.com",
                                             start_time
                                         )
 
-                                        # ✅ Send confirmation AFTER selection
+                                        # Notify Manager
                                         send_whatsapp_message(
                                             MANAGER_PHONE,
-                                            f"✅ Candidate selected: {message}"
+                                            f"✅ Candidate selected: {selected_slot}"
                                         )
 
+                                        # Notify Candidate
                                         send_whatsapp_message(
                                             CANDIDATE_PHONE,
-                                            f"🎉 Interview confirmed for {message}"
+                                            f"🎉 Interview confirmed for {selected_slot}"
                                         )
 
                                     except Exception as e:
@@ -218,7 +248,9 @@ def webhook():
         return "EVENT_RECEIVED", 200
 
 
-# 🚀 Run local
+# ================================
+# 🚀 Run
+# ================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
