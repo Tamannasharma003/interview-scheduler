@@ -2,8 +2,10 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# ✅ import AFTER app creation
+# ✅ FORCE import routes
 import webhook  
+
+print("✅ app.py loaded")
 
 if __name__ == "__main__":
     import os
