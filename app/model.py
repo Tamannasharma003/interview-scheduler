@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from database import Base
+from app.db import Base
 
 # 🔹 JOB TABLE
 class Job(Base):
