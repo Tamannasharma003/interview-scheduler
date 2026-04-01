@@ -3,7 +3,8 @@ from flask import Flask
 app = Flask(__name__)
 
 # ✅ IMPORTANT: load routes
-import webhook  
+from webhook import *
+
 
 print("✅ app.py loaded")
 

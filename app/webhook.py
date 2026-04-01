@@ -8,6 +8,8 @@ from calendar_service import create_event
 
 from datetime import datetime, timedelta
 import json
+from app import app
+
 
 
 # ================================
@@ -42,7 +44,6 @@ def convert_to_datetime(slot_str):
 # ================================
 Interview.metadata.create_all(bind=engine)
 
-app = Flask(__name__)
 
 VERIFY_TOKEN = "tamanna_verify_token"
 
