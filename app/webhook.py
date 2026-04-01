@@ -20,26 +20,23 @@ def format_phone(phone):
 # ================================
 def convert_to_datetime(slot_str):
     now = datetime.now()
+    slot_str = slot_str.lower().strip()
 
+    # ✅ Try human formats
+    for fmt in ["%d %B %I %p", "%d %b %I %p"]:
+        try:
+            dt = datetime.strptime(slot_str, fmt)
+            return dt.replace(year=now.year)
+        except:
+            continue
+
+    # ✅ Fallback (old format)
     try:
-        return datetime.strptime(slot_str.strip(), "%Y-%m-%d %H:%M")
+        return datetime.strptime(slot_str, "%Y-%m-%d %H:%M")
     except:
         pass
 
-    time_obj = datetime.strptime(slot_str.strip().lower(), "%I%p").time()
-
-    start_time = datetime(
-        year=now.year,
-        month=now.month,
-        day=now.day,
-        hour=time_obj.hour,
-        minute=time_obj.minute
-    )
-
-    if start_time < now:
-        start_time = start_time + timedelta(days=1)
-
-    return start_time
+    raise ValueError("❌ Invalid date format")
 
 
 # ================================
@@ -142,7 +139,8 @@ def send_startup_message():
     format_phone(manager.phone),
 
         f"Hi 👋 What are your available interview slots for {candidate.name} ({job.role})?\n\n"
-        "Send like:\n2026-04-02 15:00, 2026-04-03 11:30"
+       "Send like:\n1 April 11 am, 2 April 3 pm"
+
     )
 
     db.close()
@@ -260,7 +258,8 @@ def webhook():
 
                                     if selected_slot not in slots:
                                         send_whatsapp_message(
-                                            CANDIDATE_PHONE,
+                                         format_phone(candidate.phone),
+
                                             f"❌ Invalid slot.\nChoose from:\n" + "\n".join(slots)
                                         )
                                         db.close()
@@ -289,12 +288,12 @@ def webhook():
                                     )
 
                                     send_whatsapp_message(
-                                        MANAGER_PHONE,
+                                           format_phone(manager.phone),
                                         f"✅ Candidate selected: {selected_slot}"
                                     )
 
                                     send_whatsapp_message(
-                                        CANDIDATE_PHONE,
+                                       format_phone(candidate.phone), 
                                         f"🎉 Interview confirmed for {selected_slot}"
                                     )
 
