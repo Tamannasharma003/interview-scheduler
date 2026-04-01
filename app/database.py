@@ -1,13 +1,22 @@
-from flask import Flask
+import os
+from sqlalchemy import create_engine 
+from sqlalchemy.orm import sessionmaker,declarative_base 
 
-app = Flask(__name__)
+# ✅ Use DATABASE_URL (important) 
+MYSQL_URL = os.getenv("MYSQL_URL") 
+if not MYSQL_URL: 
+    raise ValueError("❌ MYSQL_URL not found in environment variables") 
 
-# ✅ THIS LINE IS CRITICAL
-import webhook  
+# ✅ Fix driver
+if MYSQL_URL.startswith("mysql://"): 
+    MYSQL_URL = MYSQL_URL.replace("mysql://", "mysql+pymysql://") 
 
-print("✅ app.py loaded")
 
-if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    # ✅ Create engine 
+engine = create_engine( MYSQL_URL, pool_pre_ping=True ) 
+
+# ✅ Session 
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+ # ✅ Base 
+Base = declarative_base()
