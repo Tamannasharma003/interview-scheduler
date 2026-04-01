@@ -11,6 +11,14 @@ import json
 
 from app import app
 
+@app.route("/")
+def home():
+    return "Server running ✅"
+
+
+@app.route("/webhook", methods=["GET", "POST"])
+def webhook():
+    # your existing code
 
 
 # ================================
@@ -18,7 +26,7 @@ from app import app
 # ================================
 Interview.metadata.create_all(bind=engine)
 
-app = Flask(__name__)
+
 
 VERIFY_TOKEN = "tamanna_verify_token"
 
