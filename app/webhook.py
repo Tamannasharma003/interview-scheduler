@@ -1,34 +1,22 @@
 import os
 import requests
-from flask import Flask, request
+from flask import request
 
 from database import engine, SessionLocal
 from model import Interview
-from calendar_service import create_event 
+from calendar_service import create_event
 
 from datetime import datetime
 import json
 
+# ✅ IMPORT app from app.py (IMPORTANT)
 from app import app
 
-@app.route("/")
-def home():
-    return "Server running ✅"
-
-
-@app.route("/webhook", methods=["GET", "POST"])
-def webhook():
-      return "Webhook working"
-
-    # your existing code
-
 
 # ================================
-# 🔹 Setup
+# 🔹 DB SETUP
 # ================================
 Interview.metadata.create_all(bind=engine)
-
-
 
 VERIFY_TOKEN = "tamanna_verify_token"
 
@@ -40,7 +28,15 @@ CANDIDATE_PHONE = "919910105877"
 
 
 # ================================
-# 🔹 Send WhatsApp Message
+# 🔹 HOME ROUTE
+# ================================
+@app.route("/")
+def home():
+    return "Server running ✅"
+
+
+# ================================
+# 🔹 SEND WHATSAPP MESSAGE
 # ================================
 def send_whatsapp_message(to, message):
     url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
@@ -58,12 +54,11 @@ def send_whatsapp_message(to, message):
     }
 
     response = requests.post(url, headers=headers, json=data)
-
     print("📤 Sent:", response.status_code, response.text)
 
 
 # ================================
-# 🔹 Routes
+# 🔹 WEBHOOK (ONLY ONE)
 # ================================
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
@@ -72,7 +67,7 @@ def webhook():
     if request.method == "GET":
         if request.args.get("hub.verify_token") == VERIFY_TOKEN:
             return request.args.get("hub.challenge")
-        return "Error", 403
+        return "Verification failed", 403
 
     # 🔹 Incoming Messages
     if request.method == "POST":
@@ -90,11 +85,7 @@ def webhook():
                     msg = value["messages"][0]
 
                     sender = msg.get("from", "").strip()
-
-                    if msg.get("type") == "text":
-                        message = msg["text"]["body"].strip()
-                    else:
-                        message = ""
+                    message = msg.get("text", {}).get("body", "").strip()
 
                     print("👤 Sender:", sender)
                     print("💬 Message:", message)
@@ -108,20 +99,19 @@ def webhook():
 
                         print("📌 Manager detected")
 
-                        # Convert message → list
                         slots = [s.strip() for s in message.split(",")]
 
                         new_interview = Interview(
                             manager_id=MANAGER_PHONE,
                             candidate_id=CANDIDATE_PHONE,
-                            job_id=1,   # ✅ Linked to jobs table
+                            job_id=1,  # ensure this column exists
                             manager_slots=json.dumps(slots),
                             status="slots_received"
                         )
 
                         db.add(new_interview)
                         db.commit()
-                        db.close()   # ✅ FIXED
+                        db.close()
 
                         send_whatsapp_message(
                             CANDIDATE_PHONE,
@@ -143,17 +133,11 @@ Reply with one slot (example: 2026-04-01 15:00)"""
                             .order_by(Interview.id.desc())\
                             .first()
 
-                        if not interview:
-                            db.close()
-                            return "ok", 200
-
-                        # ✅ Prevent crash
-                        if not interview.manager_slots:
+                        if not interview or not interview.manager_slots:
                             db.close()
                             return "ok", 200
 
                         slots = json.loads(interview.manager_slots)
-
                         selected = message.strip()
 
                         print("📌 Available:", slots)
@@ -175,24 +159,21 @@ Reply with one slot (example: 2026-04-01 15:00)"""
                         interview.status = "scheduled"
 
                         db.commit()
-                        db.close()   # ✅ FIXED
+                        db.close()
 
                         print("🚀 Creating calendar event...")
 
-                        # 🚀 Create Calendar Event
                         create_event(
                             "malvikaa.1708@gmail.com",
                             "tamannasharma336@gmail.com",
                             selected_dt
                         )
 
-                        # Notify Manager
                         send_whatsapp_message(
                             MANAGER_PHONE,
                             f"✅ Candidate selected: {selected}"
                         )
 
-                        # Notify Candidate
                         send_whatsapp_message(
                             CANDIDATE_PHONE,
                             f"🎉 Interview confirmed for {selected}"
@@ -206,11 +187,3 @@ Reply with one slot (example: 2026-04-01 15:00)"""
             print("❌ ERROR:", e)
 
         return "EVENT_RECEIVED", 200
-
-
-# ================================
-# 🚀 Run
-# ================================
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
