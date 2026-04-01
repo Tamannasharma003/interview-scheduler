@@ -9,7 +9,11 @@ from calendar_service import create_event
 from datetime import datetime
 import json
 
+from app import app
 
+@app.route("/")
+def home():
+    return "Server running ✅"
 
 
 # ================================
