@@ -11,9 +11,6 @@ import json
 
 from app import app
 
-@app.route("/")
-def home():
-    return "Server running ✅"
 
 
 # ================================
