@@ -112,14 +112,22 @@ def send_startup_message():
         db.close()
         return
 
+    message = (
+        "👋 Hello!\n\n"
+        "We’re scheduling an interview.\n\n"
+        f"👩‍💻 Candidate: {candidate.name}\n"
+        f"📌 Role: {job.role}\n\n"
+        "🗓 Please share your available time slots.\n\n"
+        "Example:\n"
+        "1 April 11 am, 2 April 3 pm"
+    )
+
     send_whatsapp_message(
         format_phone(manager.phone),
-        f"Hi 👋 What are your available interview slots for {candidate.name} ({job.role})?\n\n"
-        "Send like:\n1 April 11 am, 2 April 3 pm"
+        message
     )
 
     db.close()
-
 
 @app.before_request
 def run_once():
