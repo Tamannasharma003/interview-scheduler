@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 
 # ✅ IMPORTANT: import AFTER app creation
-from webhook import *
+import webhook 
 
 if __name__ == "__main__":
     import os

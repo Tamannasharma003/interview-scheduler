@@ -18,13 +18,15 @@ def home():
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
+      return "Webhook working"
+
     # your existing code
 
 
 # ================================
 # 🔹 Setup
 # ================================
-  Interview.metadata.create_all(bind=engine)
+Interview.metadata.create_all(bind=engine)
 
 
 
