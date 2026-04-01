@@ -2,7 +2,12 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# ✅ FORCE import routes
+# ✅ HOME ROUTE HERE (guaranteed to work)
+@app.route("/")
+def home():
+    return "Server running ✅"
+
+# import AFTER route
 import webhook  
 
 print("✅ app.py loaded")
