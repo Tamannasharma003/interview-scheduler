@@ -93,34 +93,64 @@ def send_startup_message():
 
     db = next(get_db())
 
+    # ✅ Get latest interview
     interview = db.query(Interview)\
         .order_by(Interview.id.desc())\
         .first()
 
-    if interview:
-        candidate = db.query(Candidate)\
-            .filter(Candidate.candidate_id == interview.candidate_id)\
-            .first()
+    if not interview:
+        print("❌ No interview found")
+        db.close()
+        return
 
-        job = db.query(Job)\
-            .filter(Job.id == interview.job_id)\
-            .first()
+    # ✅ Get candidate using ID
+    candidate = db.query(Candidate)\
+        .filter(Candidate.candidate_id == interview.candidate_id)\
+        .first()
 
-        send_whatsapp_message(
-            MANAGER_PHONE,
-            f"Hi 👋 What are your available interview slots for {candidate.name} ({job.role})?\n\n"
-            "Send like:\n2026-04-02 15:00, 2026-04-03 11:30"
-        )
+    if not candidate:
+        print("❌ Candidate not found")
+        db.close()
+        return
+
+    # ✅ Get manager using ID
+    manager = db.query(Manager)\
+        .filter(Manager.manager_id == interview.manager_id)\
+        .first()
+
+    if not manager:
+        print("❌ Manager not found")
+        db.close()
+        return
+
+    # ✅ Get job using ID
+    job = db.query(Job)\
+        .filter(Job.id == interview.job_id)\
+        .first()
+
+    if not job:
+        print("❌ Job not found")
+        db.close()
+        return
+
+    # ✅ Send message to manager (from DB, not hardcoded)
+    send_whatsapp_message(
+        manager.phone,
+        f"Hi 👋 What are your available interview slots for {candidate.name} ({job.role})?\n\n"
+        "Send like:\n2026-04-02 15:00, 2026-04-03 11:30"
+    )
 
     db.close()
 
 
+# ================================
+# 🔹 Run once on startup
+# ================================
 @app.before_request
 def run_once():
     if not hasattr(app, "startup_done"):
         send_startup_message()
         app.startup_done = True
-
 
 # ================================
 # 🔹 Routes
