@@ -12,6 +12,7 @@ import json
 # ✅ IMPORT app from app.py (IMPORTANT)
 from app import app
 
+print("✅ webhook.py loaded")
 
 # ================================
 # 🔹 DB SETUP
