@@ -24,7 +24,7 @@ def webhook():
 # ================================
 # 🔹 Setup
 # ================================
-Interview.metadata.create_all(bind=engine)
+  Interview.metadata.create_all(bind=engine)
 
 
 
