@@ -50,9 +50,6 @@ VERIFY_TOKEN = "tamanna_verify_token"
 ACCESS_TOKEN = os.getenv("whatsapp_token")
 PHONE_NUMBER_ID = os.getenv("phone_number_id")
 
-MANAGER_PHONE = "918168100074"
-CANDIDATE_PHONE = "919910105877"
-
 
 # ================================
 # 🔹 Send WhatsApp Message
@@ -81,7 +78,7 @@ def send_whatsapp_message(to, message):
 
 
 # ================================
-# 🔹 Startup Message
+# 🔹 Startup Message (Manager)
 # ================================
 def send_startup_message():
     print("🚀 Sending startup message")
@@ -114,20 +111,19 @@ def send_startup_message():
 
     message = (
         "👋 Hello!\n\n"
-        "We’re scheduling an interview.\n\n"
-        f"👩‍💻 Candidate: {candidate.name}\n"
-        f"📌 Role: {job.role}\n\n"
-        "🗓 Please share your available time slots.\n\n"
+        "You have a new interview request.\n\n"
+        f"👤 Candidate: {candidate.name.title()}\n"
+        f"📞 Contact: {format_phone(candidate.phone)}\n"
+        f"💼 Role: {job.role}\n\n"
+        "📅 Please share your available time slots.\n\n"
         "Example:\n"
         "1 April 11 am, 2 April 3 pm"
     )
 
-    send_whatsapp_message(
-        format_phone(manager.phone),
-        message
-    )
+    send_whatsapp_message(format_phone(manager.phone), message)
 
     db.close()
+
 
 @app.before_request
 def run_once():
@@ -147,11 +143,17 @@ def home():
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
 
+    # =========================
+    # 🔹 Verification
+    # =========================
     if request.method == "GET":
         if request.args.get("hub.verify_token") == VERIFY_TOKEN:
             return request.args.get("hub.challenge"), 200
         return "Verification failed", 403
 
+    # =========================
+    # 🔹 Incoming Messages
+    # =========================
     if request.method == "POST":
         data = request.json
         print("📥 Incoming:", data)
@@ -173,13 +175,25 @@ def webhook():
 
             db = next(get_db())
 
+            interview = db.query(Interview).order_by(Interview.id.desc()).first()
+
+            candidate = db.query(Candidate).filter(
+                Candidate.candidate_id == interview.candidate_id
+            ).first()
+
+            manager = db.query(Manager).filter(
+                Manager.manager_id == interview.manager_id
+            ).first()
+
+            job = db.query(Job).filter(
+                Job.id == interview.job_id
+            ).first()
+
             # =========================
             # ✅ MANAGER FLOW
             # =========================
-            if sender == MANAGER_PHONE[-10:]:
+            if sender == manager.phone[-10:]:
                 print("📌 Manager detected")
-
-                interview = db.query(Interview).order_by(Interview.id.desc()).first()
 
                 slots = [s.strip() for s in message.split(",")]
 
@@ -187,45 +201,31 @@ def webhook():
                 interview.status = "slots_received"
                 db.commit()
 
-                candidate = db.query(Candidate).filter(
-                    Candidate.candidate_id == interview.candidate_id
-                ).first()
-
-                job = db.query(Job).filter(
-                    Job.id == interview.job_id
-                ).first()
-
                 send_whatsapp_message(
                     format_phone(candidate.phone),
-                    f"Hi 👋 Interview for {candidate.name} ({job.role})\n\n"
-                    "Available slots:\n" +
+                    f"👋 Hello {candidate.name.title()},\n\n"
+                    f"Your interview for *{job.role}* has been scheduled.\n\n"
+                    "📅 Available Slots:\n" +
                     "\n".join(slots) +
-                    "\n\nReply with ONE slot exactly."
+                    "\n\nPlease reply with your preferred time."
                 )
 
             # =========================
             # ✅ CANDIDATE FLOW
             # =========================
-            elif sender == CANDIDATE_PHONE[-10:]:
+            elif sender == candidate.phone[-10:]:
                 print("📌 Candidate detected")
-
-                interview = db.query(Interview).order_by(Interview.id.desc()).first()
-
-                if not interview or not interview.manager_slots:
-                    print("❌ No slots found")
-                    return "ok", 200
 
                 slots = json.loads(interview.manager_slots)
                 selected_slot = message.strip()
 
-                # 🔥 SMART MATCHING
                 normalized_slots = [s.lower().replace(" ", "") for s in slots]
                 selected_clean = selected_slot.lower().replace(" ", "")
 
                 if selected_clean not in normalized_slots:
                     send_whatsapp_message(
-                        format_phone(CANDIDATE_PHONE),
-                        f"❌ Invalid slot.\nChoose from:\n" + "\n".join(slots)
+                        format_phone(candidate.phone),
+                        "❌ Invalid slot.\n\nAvailable options:\n" + "\n".join(slots)
                     )
                     return "ok", 200
 
@@ -234,14 +234,6 @@ def webhook():
                 interview.selected_slot = start_time
                 interview.status = "scheduled"
                 db.commit()
-
-                manager = db.query(Manager).filter(
-                    Manager.manager_id == interview.manager_id
-                ).first()
-
-                candidate = db.query(Candidate).filter(
-                    Candidate.candidate_id == interview.candidate_id
-                ).first()
 
                 print("🚀 Creating calendar event...")
 
@@ -254,16 +246,30 @@ def webhook():
                 except Exception as e:
                     print("❌ Calendar error:", e)
 
-                # ✅ ALWAYS SEND CONFIRMATION
-                send_whatsapp_message(
-                    format_phone(manager.phone),
-                    f"✅ Candidate selected: {selected_slot}"
+                # =========================
+                # 🎯 PROFESSIONAL MESSAGE
+                # =========================
+
+                manager_msg = (
+                    "📌 Interview Confirmed\n\n"
+                    f"👤 Candidate: {candidate.name.title()}\n"
+                    f"📞 Phone: {format_phone(candidate.phone)}\n"
+                    f"💼 Role: {job.role}\n\n"
+                    f"📅 Date: {selected_slot}\n\n"
+                    "📧 Calendar invite sent."
                 )
 
-                send_whatsapp_message(
-                    format_phone(candidate.phone),
-                    f"🎉 Interview confirmed for {selected_slot}"
+                candidate_msg = (
+                    "🎉 Interview Scheduled\n\n"
+                    f"👤 Candidate: {candidate.name.title()}\n"
+                    f"💼 Role: {job.role}\n\n"
+                    f"📅 Date: {selected_slot}\n\n"
+                    "📧 You will receive a calendar invite shortly.\n\n"
+                    "Best of luck 👍"
                 )
+
+                send_whatsapp_message(format_phone(manager.phone), manager_msg)
+                send_whatsapp_message(format_phone(candidate.phone), candidate_msg)
 
             db.close()
 
