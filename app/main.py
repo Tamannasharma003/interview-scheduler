@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .db import engine
+from .database import engine
 from .model import Base
 
 app = FastAPI()
@@ -10,7 +10,7 @@ Base.metadata.create_all(bind=engine)
 def home():
     return {"message": "Interview Scheduler Backend Running"}
 from sqlalchemy.orm import Session
-from .db import SessionLocal
+from .database import SessionLocal
 from .model import Interview
 
 

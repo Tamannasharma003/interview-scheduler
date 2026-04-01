@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from db import Base
+from database import Base
 
 # 🔹 JOB TABLE
 class Job(Base):
@@ -7,8 +7,6 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     role = Column(String(255))
-  
-
 
 
 # 🔹 INTERVIEW TABLE

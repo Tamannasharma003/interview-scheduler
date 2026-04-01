@@ -2,7 +2,8 @@ import os
 import requests
 from flask import Flask, request
 
-from db import engine, SessionLocal
+from database import engine, SessionLocal
+
 
 from model import Interview
 from calendar_service import create_event  
