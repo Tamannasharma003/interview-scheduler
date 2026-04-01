@@ -11,6 +11,9 @@ import json
 from app import app
 
 
+def format_phone(phone):
+    phone = phone.replace("+", "").strip()
+    return "91" + phone[-10:]
 
 # ================================
 # 🔹 Convert slot → datetime
@@ -134,8 +137,10 @@ def send_startup_message():
         return
 
     # ✅ Send message to manager (from DB, not hardcoded)
+    
     send_whatsapp_message(
-        manager.phone,
+    format_phone(manager.phone),
+
         f"Hi 👋 What are your available interview slots for {candidate.name} ({job.role})?\n\n"
         "Send like:\n2026-04-02 15:00, 2026-04-03 11:30"
     )
@@ -228,7 +233,8 @@ def webhook():
                                     .first()
 
                                 send_whatsapp_message(
-                                    CANDIDATE_PHONE,
+                                format_phone(candidate.phone),
+
                                     f"Hi 👋 Interview for {candidate.name} ({job.role})\n\n"
                                     "Available slots:\n" +
                                     "\n".join(slots) +
