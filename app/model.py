@@ -1,12 +1,26 @@
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from database import Base
 
+# 🔹 JOB TABLE
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    role = Column(String(255))
+
+
+# 🔹 INTERVIEW TABLE
 class Interview(Base):
     __tablename__ = "interviews"
 
     id = Column(Integer, primary_key=True, index=True)
-    manager_id = Column(String(20), nullable=True)
-    candidate_id = Column(String(20), nullable=True)
-    slots = Column(Text, nullable=True)
-    selected_slot = Column(String(255), nullable=True)
+
+    manager_id = Column(String(20))
+    candidate_id = Column(String(20))
+
+    job_id = Column(Integer, ForeignKey("jobs.id"))  # ✅ NEW
+
+    manager_slots = Column(Text)
+    selected_slot = Column(DateTime)
+
     status = Column(String(20), default="pending")
