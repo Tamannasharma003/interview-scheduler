@@ -34,3 +34,4 @@ def get_credentials():
         raise Exception("❌ No valid Google token found. Generate it locally first.")
 
     return creds
+
