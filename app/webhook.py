@@ -26,6 +26,13 @@ def convert_to_datetime(slot_str):
     now = datetime.now()
     slot_str = slot_str.lower().strip()
 
+    # 🔥 FIX: add space before am/pm if missing
+    slot_str = slot_str.replace("am", " am").replace("pm", " pm")
+
+    # remove double spaces (important)
+    slot_str = " ".join(slot_str.split())
+
+    # ✅ Try human formats
     for fmt in ["%d %B %I %p", "%d %b %I %p"]:
         try:
             dt = datetime.strptime(slot_str, fmt)
@@ -33,6 +40,7 @@ def convert_to_datetime(slot_str):
         except:
             continue
 
+    # fallback
     try:
         return datetime.strptime(slot_str, "%Y-%m-%d %H:%M")
     except:
