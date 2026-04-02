@@ -1,43 +1,36 @@
 import os
 import json
-from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
+
 def get_credentials():
     creds = None
 
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    # =========================
+    # 🔹 Load token from ENV
+    # =========================
+    token_json = os.getenv("GOOGLE_TOKEN")
 
+    if token_json:
+        creds = Credentials.from_authorized_user_info(
+            json.loads(token_json),
+            SCOPES
+        )
+
+    # =========================
+    # 🔹 Refresh if expired
+    # =========================
     if creds and creds.expired and creds.refresh_token:
         print("🔄 Refreshing token...")
         creds.refresh(Request())
 
+    # =========================
+    # ❌ If no token → STOP
+    # =========================
     if not creds or not creds.valid:
-        print("🔐 Generating new token...")
-
-        flow = InstalledAppFlow.from_client_secrets_file(
-            "credentials.json",
-            SCOPES
-        )
-
-        creds = flow.run_local_server(
-            port=0,
-            access_type="offline",
-            prompt="consent"
-        )
-
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
-
-        print("✅ token.json created successfully")
+        raise Exception("❌ No valid Google token found. Generate it locally first.")
 
     return creds
-
-
-# ✅ THIS LINE WAS MISSING
-if __name__ == "__main__":
-    get_credentials()
